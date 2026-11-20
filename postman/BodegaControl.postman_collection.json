@@ -1,0 +1,1803 @@
+{
+  "info": {
+    "_postman_id": "2b71d956-709f-4e7b-83c3-194337bd4f4b",
+    "name": "BodegaControl API",
+    "description": "Pruebas de la API REST de BodegaControl (Spring Boot). Ejecutar en orden: la primera petición guarda el token JWT.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Autenticación",
+      "item": [
+        {
+          "name": "Login administrador (200)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test(\"Devuelve token JWT y rol ADMIN\", () => { pm.expect(j.token).to.be.a(\"string\"); pm.expect(j.usuario.rol).to.eql(\"ADMIN\"); });",
+                  "pm.collectionVariables.set(\"token\", j.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login cajero (200)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"cajero\",\n  \"password\": \"cajero123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test(\"Rol CAJERO\", () => pm.expect(j.usuario.rol).to.eql(\"CAJERO\"));",
+                  "pm.collectionVariables.set(\"tokenCajero\", j.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login con contraseña incorrecta (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"incorrecta\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401 Unauthorized\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Mensaje de error claro\", () => pm.expect(pm.response.json().mensaje).to.include(\"incorrectos\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login con datos inválidos (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"ab\",\n  \"password\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Indica errores por campo\", () => { const e = pm.response.json().errores; pm.expect(e).to.have.property(\"username\"); pm.expect(e).to.have.property(\"password\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Perfil del usuario autenticado (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Usuario admin\", () => pm.expect(pm.response.json().username).to.eql(\"admin\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Acceso sin token (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/productos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "productos"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401 Unauthorized\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Mensaje de error claro\", () => pm.expect(pm.response.json().mensaje).to.include(\"iniciar sesión\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Productos",
+      "item": [
+        {
+          "name": "Listar productos (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/productos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "productos"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Devuelve una lista con productos\", () => pm.expect(pm.response.json()).to.be.an(\"array\").that.is.not.empty);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar por texto y categoría (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/productos?buscar=leche&categoria=LACTEOS",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "productos"
+              ],
+              "query": [
+                {
+                  "key": "buscar",
+                  "value": "leche"
+                },
+                {
+                  "key": "categoria",
+                  "value": "LACTEOS"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Todos son LACTEOS y contienen leche\", () => pm.response.json().forEach(p => { pm.expect(p.categoria).to.eql(\"LACTEOS\"); pm.expect(p.nombre.toLowerCase()).to.include(\"leche\"); }));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filtrar por estado AGOTADO (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/productos?estado=AGOTADO",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "productos"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "AGOTADO"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Todos tienen stock 0\", () => pm.response.json().forEach(p => pm.expect(p.stock).to.eql(0)));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filtro con categoría inexistente (400)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/productos?categoria=JUGUETES",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "productos"
+              ],
+              "query": [
+                {
+                  "key": "categoria",
+                  "value": "JUGUETES"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Mensaje de error claro\", () => pm.expect(pm.response.json().mensaje).to.include(\"categoria\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener producto por id (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/productos/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "productos",
+                "1"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Producto con id 1\", () => pm.expect(pm.response.json().id).to.eql(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener producto inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/productos/9999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "productos",
+                "9999"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404 Not Found\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Mensaje de error claro\", () => pm.expect(pm.response.json().mensaje).to.include(\"No existe el producto\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear producto (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/productos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"{{codigoNuevo}}\",\n  \"nombre\": \"Galletas Soda Field 6 pack\",\n  \"categoria\": \"SNACKS\",\n  \"precioCompra\": 2.8,\n  \"precioVenta\": 3.5,\n  \"stock\": 20,\n  \"stockMinimo\": 5,\n  \"fechaVencimiento\": \"2027-06-30\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201 Created\", () => pm.response.to.have.status(201));",
+                  "const j = pm.response.json();",
+                  "pm.test(\"Código guardado en mayúsculas y estado calculado\", () => { pm.expect(j.codigo).to.eql(pm.collectionVariables.get(\"codigoNuevo\")); pm.expect(j.estado).to.eql(\"DISPONIBLE\"); });",
+                  "pm.test(\"Cabecera Location\", () => pm.response.to.have.header(\"Location\"));",
+                  "pm.collectionVariables.set(\"productoId\", j.id);"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"codigoNuevo\", \"PM-\" + Math.floor(1000 + Math.random() * 9000));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear producto con código duplicado (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/productos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"{{codigoNuevo}}\",\n  \"nombre\": \"Galletas Soda Field 6 pack\",\n  \"categoria\": \"SNACKS\",\n  \"precioCompra\": 2.8,\n  \"precioVenta\": 3.5,\n  \"stock\": 20,\n  \"stockMinimo\": 5,\n  \"fechaVencimiento\": \"2027-06-30\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 409 Conflict\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Mensaje de error claro\", () => pm.expect(pm.response.json().mensaje).to.include(\"Ya existe\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear producto con datos inválidos (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/productos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"x\",\n  \"nombre\": \"\",\n  \"categoria\": null,\n  \"precioCompra\": -1,\n  \"precioVenta\": 0,\n  \"stock\": -5,\n  \"stockMinimo\": 2,\n  \"fechaVencimiento\": \"2020-01-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Errores por cada campo inválido\", () => { const e = pm.response.json().errores; [\"codigo\",\"nombre\",\"categoria\",\"precioCompra\",\"precioVenta\",\"stock\",\"fechaVencimiento\"].forEach(c => pm.expect(e).to.have.property(c)); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear producto con precio de venta menor al de compra (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/productos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"PM-002\",\n  \"nombre\": \"Galletas Soda Field 6 pack\",\n  \"categoria\": \"SNACKS\",\n  \"precioCompra\": 5.0,\n  \"precioVenta\": 4.0,\n  \"stock\": 20,\n  \"stockMinimo\": 5,\n  \"fechaVencimiento\": \"2027-06-30\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 409 Conflict\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Mensaje de error claro\", () => pm.expect(pm.response.json().mensaje).to.include(\"no puede ser menor\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear producto con JSON mal formado (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/productos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"codigo\": \"AB-100\", \"precioCompra\": \"abc\" ",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Mensaje de error claro\", () => pm.expect(pm.response.json().mensaje).to.include(\"JSON\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cajero intenta crear producto (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCajero}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/productos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "productos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"PM-003\",\n  \"nombre\": \"Galletas Soda Field 6 pack\",\n  \"categoria\": \"SNACKS\",\n  \"precioCompra\": 2.8,\n  \"precioVenta\": 3.5,\n  \"stock\": 20,\n  \"stockMinimo\": 5,\n  \"fechaVencimiento\": \"2027-06-30\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 403 Forbidden\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"Mensaje de error claro\", () => pm.expect(pm.response.json().mensaje).to.include(\"permisos\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar producto (200)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/productos/{{productoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "productos",
+                "{{productoId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"{{codigoNuevo}}\",\n  \"nombre\": \"Galletas Soda Field 6 pack\",\n  \"categoria\": \"SNACKS\",\n  \"precioCompra\": 2.8,\n  \"precioVenta\": 3.8,\n  \"stock\": 25,\n  \"stockMinimo\": 5,\n  \"fechaVencimiento\": \"2027-06-30\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Precio y stock actualizados\", () => { const j = pm.response.json(); pm.expect(j.precioVenta).to.eql(3.8); pm.expect(j.stock).to.eql(25); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Alertas de inventario (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/productos/alertas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "productos",
+                "alertas"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Solo productos con alerta\", () => pm.response.json().forEach(p => pm.expect(p.estado !== \"DISPONIBLE\" || p.porVencer).to.be.true));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Ventas",
+      "item": [
+        {
+          "name": "Registrar venta en efectivo (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ventas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ventas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"productoId\": {{productoId}},\n      \"cantidad\": 2\n    },\n    {\n      \"productoId\": 10,\n      \"cantidad\": 1\n    }\n  ],\n  \"metodoPago\": \"EFECTIVO\",\n  \"montoRecibido\": 20.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201 Created\", () => pm.response.to.have.status(201));",
+                  "const j = pm.response.json();",
+                  "pm.test(\"Total = suma de subtotales\", () => pm.expect(j.total).to.eql(+(j.detalles.reduce((s, d) => s + d.subtotal, 0)).toFixed(2)));",
+                  "pm.test(\"Vuelto = recibido - total\", () => pm.expect(j.vuelto).to.eql(+(j.montoRecibido - j.total).toFixed(2)));",
+                  "pm.collectionVariables.set(\"ventaId\", j.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verificar descuento automático de stock (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/productos/{{productoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "productos",
+                "{{productoId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Stock bajó de 25 a 23\", () => pm.expect(pm.response.json().stock).to.eql(23));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Venta con stock insuficiente (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ventas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ventas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"productoId\": {{productoId}},\n      \"cantidad\": 500\n    }\n  ],\n  \"metodoPago\": \"EFECTIVO\",\n  \"montoRecibido\": 5000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 409 Conflict\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Mensaje de error claro\", () => pm.expect(pm.response.json().mensaje).to.include(\"Stock insuficiente\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Venta con monto recibido insuficiente (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ventas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ventas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"productoId\": {{productoId}},\n      \"cantidad\": 1\n    }\n  ],\n  \"metodoPago\": \"EFECTIVO\",\n  \"montoRecibido\": 1.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 409 Conflict\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Mensaje de error claro\", () => pm.expect(pm.response.json().mensaje).to.include(\"menor al total\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Venta sin productos (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ventas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ventas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [],\n  \"metodoPago\": \"EFECTIVO\",\n  \"montoRecibido\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Error en items\", () => pm.expect(pm.response.json().errores).to.have.property(\"items\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Venta con billetera digital por el cajero (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCajero}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ventas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ventas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"productoId\": 1,\n      \"cantidad\": 1\n    }\n  ],\n  \"metodoPago\": \"BILLETERA_DIGITAL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201 Created\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Registrada a nombre de la cajera y sin vuelto\", () => { const j = pm.response.json(); pm.expect(j.cajero).to.eql(\"María Quispe\"); pm.expect(j.vuelto).to.eql(0); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar ventas (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ventas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ventas"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Lista ordenada de la más reciente a la más antigua\", () => { const v = pm.response.json(); pm.expect(new Date(v[0].fecha) >= new Date(v[v.length-1].fecha)).to.be.true; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar ventas por rango de fechas (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ventas?desde={{hoy}}&hasta={{hoy}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ventas"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "{{hoy}}"
+                },
+                {
+                  "key": "hasta",
+                  "value": "{{hoy}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Todas son de hoy\", () => pm.response.json().forEach(v => pm.expect(v.fecha.substring(0,10)).to.eql(pm.collectionVariables.get(\"hoy\"))));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"hoy\", new Date(Date.now() - 5*3600*1000).toISOString().substring(0,10));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rango de fechas invertido (409)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ventas?desde=2026-12-31&hasta=2026-01-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ventas"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-01-01"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 409 Conflict\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Mensaje de error claro\", () => pm.expect(pm.response.json().mensaje).to.include(\"posterior\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fecha con formato inválido (400)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ventas?desde=20-11-2026",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ventas"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "20-11-2026"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Mensaje de error claro\", () => pm.expect(pm.response.json().mensaje).to.include(\"desde\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener detalle de venta (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ventas/{{ventaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ventas",
+                "{{ventaId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Incluye 2 líneas de detalle\", () => pm.expect(pm.response.json().detalles).to.have.lengthOf(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener venta inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ventas/99999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ventas",
+                "99999"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404 Not Found\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Mensaje de error claro\", () => pm.expect(pm.response.json().mensaje).to.include(\"No existe la venta\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Ingresos de stock",
+      "item": [
+        {
+          "name": "Registrar ingreso de stock (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ingresos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ingresos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productoId\": {{productoId}},\n  \"cantidad\": 12,\n  \"observacion\": \"Compra a distribuidor\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201 Created\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Stock nuevo = anterior + cantidad\", () => { const j = pm.response.json(); pm.expect(j.stockNuevo).to.eql(j.stockAnterior + 12); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ingreso con cantidad inválida (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ingresos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ingresos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productoId\": {{productoId}},\n  \"cantidad\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Error en cantidad\", () => pm.expect(pm.response.json().errores).to.have.property(\"cantidad\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ingreso de producto inexistente (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ingresos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ingresos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productoId\": 9999,\n  \"cantidad\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404 Not Found\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cajero intenta registrar ingreso (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCajero}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ingresos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ingresos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productoId\": 1,\n  \"cantidad\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 403 Forbidden\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar ingresos (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ingresos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ingresos"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Hay al menos un ingreso\", () => pm.expect(pm.response.json()).to.not.be.empty);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Dashboard y generales",
+      "item": [
+        {
+          "name": "Dashboard (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dashboard"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Incluye indicadores\", () => { const j = pm.response.json(); [\"ventasHoy\",\"operacionesHoy\",\"ventasMes\",\"valorInventario\",\"alertas\"].forEach(k => pm.expect(j).to.have.property(k)); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Categorías (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/categorias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "categorias"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"6 categorías\", () => pm.expect(pm.response.json()).to.have.lengthOf(6));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health check público (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Estado UP\", () => pm.expect(pm.response.json().estado).to.eql(\"UP\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar producto (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/productos/{{productoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "productos",
+                "{{productoId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204 No Content\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Producto eliminado ya no se encuentra (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/productos/{{productoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "productos",
+                "{{productoId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404 Not Found\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ruta inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/no-existe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "no-existe"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404 Not Found\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "tokenCajero",
+      "value": ""
+    },
+    {
+      "key": "productoId",
+      "value": ""
+    },
+    {
+      "key": "ventaId",
+      "value": ""
+    },
+    {
+      "key": "hoy",
+      "value": ""
+    },
+    {
+      "key": "codigoNuevo",
+      "value": ""
+    }
+  ]
+}
