@@ -8,7 +8,7 @@ El frontend en Angular está en: https://github.com/milladetel/bodegacontrol-fro
 ## Tecnologías
 
 - Java 17 · Spring Boot 3.5.9 (Web, Data JPA, Validation, Security)
-- MySQL 8 (perfil `mysql`, por defecto) · H2 en memoria (perfil `h2`, para pruebas)
+- MySQL 8.4 (perfil `mysql`, por defecto) · H2 en memoria (perfil `h2`, para pruebas)
 - JWT (jjwt 0.12.6) · BCrypt · Lombok · Maven Wrapper
 - Postman / Newman para las pruebas de los endpoints
 
