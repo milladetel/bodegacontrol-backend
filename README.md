@@ -58,6 +58,18 @@ src/main/java/pe/edu/upn/bodegacontrol
 ├── entity        Usuario, Producto, Venta, DetalleVenta, IngresoStock
 ├── dto           Records de entrada (con validaciones) y salida
 └── exception     GlobalExceptionHandler y excepciones del negocio
+
+BD/               Scripts SQL de MySQL (estructura, datos y respaldo completo) y modelo ER
+postman/          Colección de pruebas de los endpoints
+```
+
+## Base de datos
+
+En la carpeta [`BD`](BD) están los scripts de la base `bodegacontrol`:
+`01_estructura.sql`, `02_datos.sql` y `bodegacontrol_completo.sql`.
+
+```bash
+mysql -u root -p < BD/bodegacontrol_completo.sql
 ```
 
 ## Endpoints
